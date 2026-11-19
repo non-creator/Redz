@@ -1,0 +1,107 @@
+local Players = game:GetService("Players")
+local WAIT_SECONDS = 59
+
+-- ===== หน้าจอสีดำเต็มจอ + นับถอยหลัง =====
+local function showBlackScreen(seconds)
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "BlackScreenWait"
+	gui.IgnoreGuiInset = true
+	gui.ResetOnSpawn = false
+	gui.DisplayOrder = 999999
+	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(1, 0, 1, 0)
+	frame.BackgroundColor3 = Color3.new(0, 0, 0)
+	frame.BorderSizePixel = 0
+	frame.Active = true -- กันการกดทะลุหน้าจอ
+	frame.Parent = gui
+
+	local label = Instance.new("TextLabel")
+	label.AnchorPoint = Vector2.new(0.5, 0.5)
+	label.Position = UDim2.new(0.5, 0, 0.5, 0)
+	label.Size = UDim2.new(0.8, 0, 0, 80)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextScaled = true
+	label.Font = Enum.Font.GothamBold
+	label.Text = "กรุณารอ " .. seconds .. " วินาที"
+	label.Parent = frame
+
+	local ok = pcall(function()
+		gui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
+	end)
+	if not ok or not gui.Parent then
+		gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+	end
+
+	for i = seconds, 1, -1 do
+		label.Text = "กรุณารอ " .. i .. " วินาที"
+		task.wait(1)
+	end
+
+	gui:Destroy()
+end
+
+showBlackScreen(WAIT_SECONDS)
+
+-- ===== โค้ดเดิม (รันหลังรอครบ 59 วินาที) =====
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local KEY = "REDZ"
+local FILE = "redz_key_time.txt"
+local VALID_SECONDS = 24 * 60 * 60 -- 1 วัน
+
+local function keyStillValid()
+	local ok, result = pcall(function()
+		if isfile and isfile(FILE) then
+			local t = tonumber(readfile(FILE))
+			return t ~= nil and (os.time() - t) < VALID_SECONDS
+		end
+		return false
+	end)
+	return ok and result == true
+end
+
+local needKey = not keyStillValid()
+
+local Window = Rayfield:CreateWindow({
+	Name = "กดตรงนี้",
+	LoadingTitle = "กดตรงนี้",
+	LoadingSubtitle = "กำลังโหลด...",
+	ConfigurationSaving = { Enabled = false },
+	KeySystem = needKey,
+	KeySettings = {
+		Title = "ใส่คีย์",
+		Subtitle = "ระบบคีย์",
+		Note = "ใส่คีย์เพื่อใช้งาน (ใช้ได้ 1 วัน)",
+		FileName = "RedzKey",
+		SaveKey = false,
+		GrabKeyFromSite = false,
+		Key = { KEY },
+	},
+})
+
+if needKey then
+	pcall(function()
+		writefile(FILE, tostring(os.time()))
+	end)
+end
+
+local Tab = Window:CreateTab("หลัก", 4483362458)
+
+Tab:CreateButton({
+	Name = "กดตรงนี้",
+	Callback = function()
+		local ok, err = pcall(function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Redz/refs/heads/main/Redz/v3.luau"))()
+		end)
+		if not ok then
+			Rayfield:Notify({
+				Title = "ผิดพลาด",
+				Content = tostring(err),
+				Duration = 6,
+			})
+		end
+	end,
+})
